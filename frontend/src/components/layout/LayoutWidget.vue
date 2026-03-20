@@ -36,7 +36,7 @@
             item-key="__index__"
             ghost-class="ghost"
             :animation="200"
-            group="layout"
+            :group="{ name: 'layout', pull: true, put: true }"
             @end="onChildDragEnd"
           >
             <template #item="{ element, index }">
@@ -72,7 +72,7 @@
             item-key="__index__"
             ghost-class="ghost"
             :animation="200"
-            group="layout"
+            :group="{ name: 'layout', pull: true, put: true }"
             class="row-container"
             @end="onChildDragEnd"
           >

@@ -11,7 +11,7 @@
     </div>
 
     <div class="editor-container">
-      <WidgetPanel />
+      <WidgetPanel @widget-click="onWidgetClick" />
       
       <LayoutCanvas 
         :items="layoutItems"
@@ -119,6 +119,11 @@ const onWidgetDrop = (widget) => {
 
 const updateItems = (newItems) => {
   layoutItems.value = newItems
+}
+
+// 点击控件添加到画布
+const onWidgetClick = (widget) => {
+  onWidgetDrop(widget)
 }
 
 // 将控件移动到容器中

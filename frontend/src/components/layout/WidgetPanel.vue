@@ -4,26 +4,34 @@
     
     <div class="widget-section">
       <div class="section-title">字段</div>
-      <div class="widget-list">
-        <div
-          v-for="widget in widgets"
-          :key="widget.type"
-          class="widget-item"
-          draggable="true"
-          @dragstart="onDragStart($event, widget)"
-        >
-          <el-icon><component :is="widget.icon" /></el-icon>
-          <span>{{ widget.label }}</span>
-        </div>
-      </div>
+      <draggable
+        v-model="widgets"
+        :group="{ name: 'layout', pull: 'clone', put: false }"
+        :sort="false"
+        item-key="type"
+        class="widget-list"
+      >
+        <template #item="{ element }">
+          <div
+            class="widget-item"
+            @click="onWidgetClick(element)"
+          >
+            <el-icon><component :is="element.icon" /></el-icon>
+            <span>{{ element.label }}</span>
+          </div>
+        </template>
+      </draggable>
     </div>
   </el-card>
 </template>
 
 <script setup>
-const emit = defineEmits(['drag-start'])
+import { ref } from 'vue'
+import draggable from 'vuedraggable'
 
-const widgets = [
+const emit = defineEmits(['drag-start', 'widget-click'])
+
+const widgets = ref([
   { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true },
   { type: 'text', label: '单行文本', icon: 'Edit', compatibleTypes: ['text', 'textarea'] },
   { type: 'textarea', label: '文本域', icon: 'Document', compatibleTypes: ['text'] },
@@ -31,7 +39,7 @@ const widgets = [
   { type: 'date', label: '日期', icon: 'Calendar', compatibleTypes: ['date'] },
   { type: 'switch', label: '开关', icon: 'Switch', compatibleTypes: ['boolean'] },
   { type: 'select', label: '下拉选择', icon: 'ArrowDown', compatibleTypes: ['select'] },
-]
+])
 
 const onDragStart = (event, widget) => {
   // 容器需要额外传递属性
@@ -42,6 +50,15 @@ const onDragStart = (event, widget) => {
   }
   event.dataTransfer.setData('widget', JSON.stringify(widgetData))
   emit('drag-start', widget)
+}
+
+// 点击控件添加到画布（兼容点击添加）
+const onWidgetClick = (widget) => {
+  emit('widget-click', {
+    ...widget,
+    isContainer: widget.canHaveChildren,
+    direction: widget.direction || 'column'
+  })
 }
 </script>
 

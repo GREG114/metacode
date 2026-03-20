@@ -18,6 +18,7 @@
         ghost-class="ghost"
         drag-class="dragging"
         :animation="200"
+        :group="{ name: 'layout', pull: true, put: true }"
         @end="onDragEnd"
       >
         <template #item="{ element, index }">
