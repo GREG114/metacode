@@ -41,7 +41,6 @@ const emit = defineEmits(['drag-start'])
 
 const containers = [
   { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true },
-  { type: 'container', label: '容器', icon: 'Grid', canHaveChildren: true },
 ]
 console.log('[WidgetPanel] containers:', containers)
 
