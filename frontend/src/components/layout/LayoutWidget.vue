@@ -38,12 +38,16 @@
               <el-col
                 :span="element.span || 6"
                 class="child-col"
+                :class="{ active: selectedChildIndex === index }"
+                :data-idx="index"
+                :data-sci="selectedChildIndex"
+                :data-issel="selected"
                 @click.stop="(event) => onChildClick(event, index, element)"
               >
                 <LayoutWidget
                   :item="element"
                   :fields="fields"
-                  :selected="false"
+                  :selected="selectedChildIndex === index"
                   @update="(newVal) => updateChild(index, newVal)"
                   @remove="removeChild(index)"
                   @select="(info) => emit('select', { parentIndex: index, child: info })"
@@ -76,13 +80,14 @@
             <template #item="{ element, index }">
               <div 
                 class="horizontal-item" 
+                :class="{ active: selectedChildIndex === index }"
                 :style="{ flex: element.span ? `0 0 ${(element.span/24)*100}%` : '1', minWidth: '0' }"
                 @click.stop="(event) => onChildClick(event, index, element)"
               >
                 <LayoutWidget
                   :item="element"
                   :fields="fields"
-                  :selected="false"
+                  :selected="selectedChildIndex === index"
                   @update="(newVal) => updateChild(index, newVal)"
                   @remove="removeChild(index)"
                   @select="(info) => emit('select', { parentIndex: index, child: info })"
@@ -104,12 +109,14 @@
     
     <!-- 普通控件 -->
     <template v-else>
-      <div class="widget-header">
-        <span>{{ widgetLabel }}</span>
-        <el-icon @click.stop="emit('remove')"><Close /></el-icon>
-      </div>
-      <div class="widget-content">
-        {{ item.label || item.fieldName || '未绑定' }}
+      <div class="widget-body" @click.stop="emit('select', item)">
+        <div class="widget-header">
+          <span>{{ widgetLabel }}</span>
+          <el-icon @click.stop="emit('remove')"><Close /></el-icon>
+        </div>
+        <div class="widget-content">
+          {{ item.label || item.fieldName || '未绑定' }}
+        </div>
       </div>
     </template>
   </div>
@@ -131,12 +138,22 @@ const props = defineProps({
   selected: {
     type: Boolean,
     default: false
+  },
+  selectedChildIndex: {
+    type: Number,
+    default: null
   }
 })
 
 const emit = defineEmits(['update', 'remove', 'child-add', 'dragenter', 'select', 'move-to-container', 'child-dragstart', 'child-dragend', 'child-drop-out'])
 
 const expanded = ref(true)
+
+// 调试用
+const isChildActive = computed(() => {
+  console.log('[LayoutWidget]', props.item?.widgetType, 'selectedChildIndex:', props.selectedChildIndex)
+  return props.selectedChildIndex !== null && props.selectedChildIndex !== undefined
+})
 
 const isContainer = computed(() => {
   return ['panel', 'container'].includes(props.item.widgetType)
@@ -321,6 +338,21 @@ const removeChild = (index) => {
 .row-container .horizontal-item {
   flex: 1;
   min-width: 0;
+  padding: 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.row-container .horizontal-item:hover {
+  background: #e6f4ff;
+  outline: 2px solid #409eff;
+}
+
+.row-container .horizontal-item.active {
+  background: #e6f4ff;
+  outline: 2px solid #409eff;
 }
 
 .container-body.column {
@@ -347,10 +379,20 @@ const removeChild = (index) => {
 .child-col {
   cursor: pointer;
   pointer-events: auto;
+  padding: 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .child-col:hover {
-  opacity: 0.8;
+  background: #e6f4ff;
+  outline: 2px solid #409eff;
+}
+
+.child-col.active {
+  background: #e6f4ff;
+  outline: 2px solid #409eff;
 }
 
 /* 普通控件样式 */

@@ -16,6 +16,8 @@
       <LayoutCanvas 
         :items="layoutItems"
         :selected-index="selectedIndex"
+        :selected-parent-index="selectedParentIndex"
+        :selected-child-index="selectedChildIndex"
         :fields="availableFields"
         @drop="onWidgetDrop"
         @select="handleSelect"

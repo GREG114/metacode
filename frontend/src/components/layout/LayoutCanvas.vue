@@ -18,24 +18,25 @@
         @add="onItemAdded"
         @end="onDragEnd"
       >
-        <template #item="{ element }">
+        <template #item="{ element, index }">
           <el-col
             :span="element.span || (element.widgetType === 'panel' ? 24 : 6)"
             class="layout-col"
-            :class="{ active: selectedIndex === localItems.indexOf(element) }"
-            @click="emit('select', localItems.indexOf(element))"
+            :class="{ active: selectedIndex === index }"
+            @click.stop="emit('select', index)"
           >
             <LayoutWidget
               :item="element"
               :fields="fields"
-              :selected="selectedIndex === localItems.indexOf(element)"
+              :selected="selectedIndex === index"
+              :selected-child-index="selectedParentIndex === index ? selectedChildIndex : null"
               @update="(newVal) => updateItem(element.id, newVal)"
               @remove="removeItem(element.id)"
               @child-add="(widget) => addChildToContainer(element.id, widget)"
-              @select="(info) => emit('select', { containerIndex: localItems.indexOf(element), childIndex: info.parentIndex, child: info.child })"
-              @move-to-container="(info) => emit('move-to-container', { fromIndex: localItems.indexOf(element), ...info })"
-              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: localItems.indexOf(element), ...info })"
-              @child-dragend="(info) => emit('child-dragend', { containerIndex: localItems.indexOf(element), ...info })"
+              @select="(info) => emit('select', { containerIndex: index, childIndex: info.parentIndex, child: info.child })"
+              @move-to-container="(info) => emit('move-to-container', { fromIndex: index, ...info })"
+              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: index, ...info })"
+              @child-dragend="(info) => emit('child-dragend', { containerIndex: index, ...info })"
             />
           </el-col>
         </template>
@@ -55,6 +56,14 @@ const props = defineProps({
     default: () => []
   },
   selectedIndex: {
+    type: Number,
+    default: null
+  },
+  selectedParentIndex: {
+    type: Number,
+    default: null
+  },
+  selectedChildIndex: {
     type: Number,
     default: null
   },
