@@ -53,10 +53,12 @@
                 />
               </el-col>
             </template>
+            <template #footer>
+              <div v-if="children.length === 0" class="empty-tip">
+                拖拽控件到此处
+              </div>
+            </template>
           </draggable>
-          <div v-if="children.length === 0" class="empty-tip">
-            拖拽控件到此处
-          </div>
         </template>
 
         <!-- 横向布局 -->
@@ -90,10 +92,12 @@
                 />
               </div>
             </template>
+            <template #footer>
+              <div v-if="children.length === 0" class="empty-tip">
+                拖拽控件到此处
+              </div>
+            </template>
           </draggable>
-          <div v-if="children.length === 0" class="empty-tip">
-            拖拽控件到此处
-          </div>
         </template>
       </div>
     </template>
@@ -295,7 +299,7 @@ const removeChild = (index) => {
 }
 
 .container-body {
-  min-height: 60px;
+  min-height: 120px;
 }
 
 .container-body.row {
@@ -330,6 +334,14 @@ const removeChild = (index) => {
   color: #909399;
   padding: 20px;
   font-size: 12px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.container-body:not(:has(.draggable--choosed)) .empty-tip:hover {
+  border-color: #409eff;
+  background: #f5f7fa;
 }
 
 .child-col {
