@@ -19,6 +19,7 @@
         drag-class="dragging"
         :animation="200"
         :group="{ name: 'layout', pull: true, put: true }"
+        @add="onItemAdded"
         @end="onDragEnd"
       >
         <template #item="{ element, index }">
@@ -84,6 +85,57 @@ const localItems = ref([])
 watch(() => props.items, (newItems) => {
   localItems.value = (newItems || []).map((item, idx) => ({ ...item, __index__: idx, __selfIndex__: idx }))
 }, { immediate: true, deep: true })
+
+// vuedraggable 接受新元素时触发（从工具箱拖入或从容器拖出）
+const onItemAdded = (evt) => {
+  const newItem = localItems.value[evt.newIndex]
+  
+  // 检查是否是工具箱拖入的新控件（没有 __selfIndex__）
+  if (newItem && (newItem.__selfIndex__ === undefined || newItem.__selfIndex__ === null)) {
+    const widgetType = newItem.type || newItem.widgetType
+    const canHaveChildren = newItem.canHaveChildren
+    
+    if (canHaveChildren) {
+      // 容器控件
+      localItems.value[evt.newIndex] = {
+        widgetType: widgetType,
+        direction: newItem.direction || 'column',
+        label: widgetType === 'panel' ? '新面板' : '',
+        children: [],
+        expanded: true,
+        span: 24,
+        __index__: evt.newIndex,
+        __selfIndex__: evt.newIndex
+      }
+    } else {
+      // 普通控件
+      localItems.value[evt.newIndex] = {
+        widgetType: widgetType,
+        label: newItem.label || '',
+        fieldName: '',
+        span: 6,
+        props: {
+          visible: true,
+          required: false,
+          readonly: false,
+          default: ''
+        },
+        __index__: evt.newIndex,
+        __selfIndex__: evt.newIndex
+      }
+    }
+    
+    // 立即触发更新
+    const newItems = localItems.value.map(item => {
+      const { __index__: i, __selfIndex__: s, ...rest } = item
+      return rest
+    })
+    emit('update', newItems)
+  } else {
+    // 内部排序或从容器移动到画布
+    onDragEnd(evt)
+  }
+}
 
 const onDragEnd = (evt) => {
   const newItems = localItems.value.map(item => {

@@ -22,21 +22,16 @@
       <div v-if="item.widgetType !== 'panel' || expanded" 
            class="container-body"
            :class="{ 'row': containerDirection === 'row', 'column': containerDirection === 'column' }"
-           @dragover.prevent
-           @drop.stop="onContainerDrop"
       >
         <!-- 纵向布局 -->
         <template v-if="containerDirection === 'column'">
-          <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
-            拖拽控件到此处
-          </div>
           <draggable
-            v-else
             v-model="localChildren"
             item-key="__index__"
             ghost-class="ghost"
             :animation="200"
             :group="{ name: 'layout', pull: true, put: true }"
+            @add="onChildAdded"
             @end="onChildDragEnd"
           >
             <template #item="{ element, index }">
@@ -59,21 +54,21 @@
               </el-col>
             </template>
           </draggable>
+          <div v-if="children.length === 0" class="empty-tip">
+            拖拽控件到此处
+          </div>
         </template>
 
         <!-- 横向布局 - 不用 el-col，直接用 flex div -->
         <template v-else>
-          <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
-            拖拽控件到此处
-          </div>
           <draggable
-            v-else
             v-model="localChildren"
             item-key="__index__"
             ghost-class="ghost"
             :animation="200"
             :group="{ name: 'layout', pull: true, put: true }"
             class="row-container"
+            @add="onChildAdded"
             @end="onChildDragEnd"
           >
             <template #item="{ element, index }">
@@ -96,6 +91,9 @@
               </div>
             </template>
           </draggable>
+          <div v-if="children.length === 0" class="empty-tip">
+            拖拽控件到此处
+          </div>
         </template>
       </div>
     </template>
@@ -114,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, toRaw } from 'vue'
 import draggable from 'vuedraggable'
 
 const props = defineProps({
@@ -165,9 +163,61 @@ watch(() => props.item.children, (newChildren) => {
 }, { immediate: true, deep: true })
 
 // 当 vuedraggable 内部排序变化时，手动 emit update
+// vuedraggable 接受新元素时触发（从工具箱拖入或从其他容器拖入）
+const onChildAdded = (evt) => {
+  const newItem = localChildren.value[evt.newIndex]
+  
+  // 检查是否是工具箱拖入的新控件（没有 __selfIndex__ 或 __selfIndex__ 为 undefined）
+  if (newItem && (newItem.__selfIndex__ === undefined || newItem.__selfIndex__ === null)) {
+    // 这是从工具箱拖入的新控件，需要转换格式
+    const widgetType = newItem.type || newItem.widgetType
+    const canHaveChildren = newItem.canHaveChildren
+    
+    if (canHaveChildren) {
+      // 容器控件
+      localChildren.value[evt.newIndex] = {
+        widgetType: widgetType,
+        direction: newItem.direction || 'column',
+        label: widgetType === 'panel' ? '新面板' : '',
+        children: [],
+        expanded: true,
+        span: 24,
+        __index__: evt.newIndex,
+        __parentIndex__: props.item.__selfIndex__
+      }
+    } else {
+      // 普通控件
+      localChildren.value[evt.newIndex] = {
+        widgetType: widgetType,
+        label: newItem.label || '',
+        fieldName: '',
+        span: 12,
+        props: {
+          visible: true,
+          required: false,
+          readonly: false,
+          default: ''
+        },
+        __index__: evt.newIndex,
+        __parentIndex__: props.item.__selfIndex__
+      }
+    }
+    
+    // 立即触发更新
+    const newChildren = localChildren.value.map(item => {
+      const { __index__: i, __parentIndex__: pi, __selfIndex__: si, ...rest } = item
+      return rest
+    })
+    emit('update', { ...toRaw(props.item), children: newChildren })
+  } else {
+    // 内部排序或从其他容器移动，直接更新
+    onChildDragEnd(evt)
+  }
+}
+
 const onChildDragEnd = (evt) => {
   const newChildren = localChildren.value.map(item => {
-    const { __index__, __parentIndex__, __selfIndex__, ...rest } = item
+    const { __index__: i, __parentIndex__: pi, __selfIndex__: si, ...rest } = item
     return rest
   })
   emit('update', { ...toRaw(props.item), children: newChildren })
