@@ -25,10 +25,6 @@
            @dragover.prevent
            @drop.stop="onContainerDrop"
       >
-        <!-- DEBUG: 显示当前方向 -->
-        <div v-if="item.widgetType === 'panel'" style="position:absolute;top:0;right:0;background:red;color:white;font-size:10px;padding:2px 4px;z-index:999">
-          dir: {{ containerDirection }}
-        </div>
         <!-- 纵向布局 -->
         <template v-if="containerDirection === 'column'">
           <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
@@ -65,7 +61,7 @@
           </draggable>
         </template>
 
-        <!-- 横向布局 -->
+        <!-- 横向布局 - 不用 el-col，直接用 flex div -->
         <template v-else>
           <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
             拖拽控件到此处
@@ -77,11 +73,15 @@
             ghost-class="ghost"
             :animation="200"
             group="layout"
-            class="horizontal-drag"
+            class="row-container"
             @end="onChildDragEnd"
           >
             <template #item="{ element, index }">
-              <div class="horizontal-item" @click.stop="(event) => onChildClick(event, index, element)">
+              <div 
+                class="horizontal-item" 
+                :style="{ flex: element.span ? `0 0 ${(element.span/24)*100}%` : '1', minWidth: '0' }"
+                @click.stop="(event) => onChildClick(event, index, element)"
+              >
                 <LayoutWidget
                   :item="element"
                   :fields="fields"
@@ -332,13 +332,18 @@ const removeChild = (index) => {
   flex-direction: row;
   gap: 16px;
   align-items: stretch;
+  flex-wrap: nowrap;
 }
 
-.container-body.row .el-col {
-  flex: 1;
+/* 横向拖拽容器 */
+.row-container {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  width: 100%;
 }
 
-.container-body.row .horizontal-item {
+.row-container .horizontal-item {
   flex: 1;
   min-width: 0;
 }
