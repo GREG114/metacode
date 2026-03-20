@@ -3,7 +3,7 @@
     <div class="preview-form">
       <el-form label-width="100px">
         <el-row :gutter="16">
-        <template v-for="item in flatItems" :key="item.key">
+        <template v-for="item in flatItems" :key="item.uniqueKey">
           <el-col
             :span="item.span || 6"
             v-show="item.props?.visible !== false"
@@ -35,8 +35,8 @@
                 :disabled="item.props?.readonly"
                 placeholder="请选择"
               >
-                <el-option label="选项1" value="1" />
-                <el-option label="选项2" value="2" />
+                <el-option label="选项 1" value="1" />
+                <el-option label="选项 2" value="2" />
               </el-select>
               <el-input
                 v-else-if="item.widgetType === 'field'"
@@ -77,22 +77,37 @@ const visible = computed({
 // 展平嵌套结构：处理 panel/row/column 及其 children
 const flatItems = computed(() => {
   const result = []
-  const flatten = (items, prefix = '') => {
+  const flatten = (items) => {
+    if (!Array.isArray(items)) return
+    
     for (const item of items) {
-      // 跳过容器类型，只渲染实际控件
-      if (['panel', 'row', 'column', 'container'].includes(item.widgetType)) {
+      // 定义容器类型列表
+      const containerTypes = ['panel', 'row', 'column', 'container']
+      
+      // 如果是容器类型，优先递归处理其子元素
+      if (containerTypes.includes(item.widgetType)) {
         if (item.children && item.children.length > 0) {
-          flatten(item.children, prefix)
+          flatten(item.children)
         }
+        // 容器本身不渲染为表单项，直接跳过
         continue
       }
-      // 添加 key 避免冲突
+      
+      // 生成安全的唯一键：优先使用 id，其次使用 fieldName+label，最后随机
+      let uniqueKey = item.id
+      if (!uniqueKey) {
+        const base = item.fieldName || item.label || ''
+        uniqueKey = base ? `${base}_${Math.random().toString(36).slice(2, 8)}` : Math.random().toString(36).slice(2)
+      }
+
+      // 添加实际控件到结果集
       result.push({
         ...item,
-        key: prefix + item.fieldName || item.label || Math.random().toString(36).slice(2)
+        uniqueKey: uniqueKey
       })
     }
   }
+  
   flatten(props.items || [])
   return result
 })
