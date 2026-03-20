@@ -20,6 +20,13 @@
             <el-switch v-model="localItem.expanded" @change="emitUpdate" />
           </el-form-item>
           
+          <el-form-item label="排列方向">
+            <el-radio-group v-model="localItem.direction" @change="emitUpdate">
+              <el-radio-button value="column">纵向</el-radio-button>
+              <el-radio-button value="row">横向</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          
           <el-divider>栅格设置</el-divider>
           
           <el-form-item label="宽度(列)">
