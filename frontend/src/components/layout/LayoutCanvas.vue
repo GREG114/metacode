@@ -1,7 +1,7 @@
 <template>
   <el-card class="canvas-panel">
     <template #header>
-      <span>画布区域（拖拽控件到此处，12栅格）</span>
+      <span>画布区域（拖拽控件到此处，12 栅格）</span>
     </template>
     <div class="canvas-area">
       <div v-if="items.length === 0" class="empty-tip">
@@ -18,24 +18,24 @@
         @add="onItemAdded"
         @end="onDragEnd"
       >
-        <template #item="{ element, index }">
+        <template #item="{ element }">
           <el-col
             :span="element.span || (element.widgetType === 'panel' ? 24 : 6)"
             class="layout-col"
-            :class="{ active: selectedIndex === index }"
-            @click="emit('select', index)"
+            :class="{ active: selectedIndex === localItems.indexOf(element) }"
+            @click="emit('select', localItems.indexOf(element))"
           >
             <LayoutWidget
               :item="element"
               :fields="fields"
-              :selected="selectedIndex === index"
-              @update="(newVal) => updateItem(element.__selfIndex__, newVal)"
-              @remove="emit('remove', index)"
-              @child-add="(widget) => addChildToContainer(element.__selfIndex__, widget)"
-              @select="(info) => emit('select', { containerIndex: element.__selfIndex__, childIndex: info.parentIndex, child: info.child })"
-              @move-to-container="(info) => emit('move-to-container', { fromIndex: element.__selfIndex__, ...info })"
-              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: element.__selfIndex__, ...info })"
-              @child-dragend="(info) => emit('child-dragend', { containerIndex: element.__selfIndex__, ...info })"
+              :selected="selectedIndex === localItems.indexOf(element)"
+              @update="(newVal) => updateItem(element.id, newVal)"
+              @remove="removeItem(element.id)"
+              @child-add="(widget) => addChildToContainer(element.id, widget)"
+              @select="(info) => emit('select', { containerIndex: localItems.indexOf(element), childIndex: info.parentIndex, child: info.child })"
+              @move-to-container="(info) => emit('move-to-container', { fromIndex: localItems.indexOf(element), ...info })"
+              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: localItems.indexOf(element), ...info })"
+              @child-dragend="(info) => emit('child-dragend', { containerIndex: localItems.indexOf(element), ...info })"
             />
           </el-col>
         </template>
@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, toRaw } from 'vue'
+import { ref, watch } from 'vue'
 import draggable from 'vuedraggable'
 import LayoutWidget from './LayoutWidget.vue'
 
@@ -66,59 +66,38 @@ const props = defineProps({
 
 const emit = defineEmits(['drop', 'select', 'remove', 'update', 'move-to-container', 'child-dragstart', 'child-dragend', 'child-drop-out'])
 
-const widgets = [
-  { type: 'text', label: '单行文本' },
-  { type: 'textarea', label: '文本域' },
-  { type: 'number', label: '数字' },
-  { type: 'date', label: '日期' },
-  { type: 'switch', label: '开关' },
-  { type: 'select', label: '下拉选择' },
-]
-
-// vuedraggable 用的 items（用 watch 模式）
 const localItems = ref([])
 
-// 生成唯一ID（如果没有的话）
-const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
+// 同步 props.items 到 localItems，确保 id 存在
 watch(() => props.items, (newItems) => {
-  localItems.value = (newItems || []).map((item, idx) => ({
+  localItems.value = (newItems || []).map(item => ({
     ...item,
-    id: item.id || generateId(),
-    __index__: idx,
-    __selfIndex__: idx
+    id: item.id || `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }))
 }, { immediate: true, deep: true })
 
-// vuedraggable 接受新元素时触发（从工具箱拖入或从容器拖出）
 const onItemAdded = (evt) => {
   const newItem = localItems.value[evt.newIndex]
   
-  // 只有从工具箱拖入的新控件才需要初始化
+  // 只有标记为 isNew 的控件才需要初始化结构
   if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
-    const canHaveChildren = newItem.canHaveChildren
-    
-    const baseItem = {
-      id: newItem.id, // 保留唯一ID
-      isNew: false
-    }
+    const canHaveChildren = newItem.isContainer
     
     if (canHaveChildren) {
-      // 容器控件
       localItems.value[evt.newIndex] = {
-        ...baseItem,
+        id: newItem.id,
         widgetType: widgetType,
         direction: newItem.direction || 'column',
         label: widgetType === 'panel' ? '新面板' : '',
         children: [],
         expanded: true,
-        span: 24
+        span: 24,
+        isNew: false
       }
     } else {
-      // 普通控件
       localItems.value[evt.newIndex] = {
-        ...baseItem,
+        id: newItem.id,
         widgetType: widgetType,
         label: newItem.label || '',
         fieldName: '',
@@ -128,101 +107,48 @@ const onItemAdded = (evt) => {
           required: false,
           readonly: false,
           default: ''
-        }
+        },
+        isNew: false
       }
     }
-  }
-  
-  // 无论是新控件还是移动，都触发更新
-  onDragEnd(evt)
-}
-
-const onDragEnd = (evt) => {
-  // 只清理内部元数据，保留 id 和业务数据
-  const newItems = localItems.value.map(item => {
-    const { __index__: i, __selfIndex__: s, isNew, ...rest } = item
-    return rest
-  })
-  emit('update', newItems)
-}
-
-const onDrop = (event) => {
-  const widgetData = event.dataTransfer.getData('widget')
-  const dragSource = event.dataTransfer.getData('drag-source')
-  const childIndex = event.dataTransfer.getData('child-index')
-  const containerIndex = event.dataTransfer.getData('container-index')
-  
-  // 子控件从容器拖出到画布
-  if (dragSource === 'child' && childIndex !== null && containerIndex !== null) {
-    emit('child-drop-out', {
-      fromContainerIndex: parseInt(containerIndex),
-      childIndex: parseInt(childIndex)
-    })
-    return
-  }
-  
-  // 拖拽新控件（从 WidgetPanel 拖入）
-  if (!widgetData) return
-  
-  const widget = JSON.parse(widgetData)
-  
-  // 如果是容器，直接添加
-  if (widget.isContainer) {
-    emit('drop', {
-      widgetType: widget.type,
-      direction: 'column',  // 默认纵向
-      label: widget.type === 'panel' ? '新面板' : '',
-      children: [],
-      expanded: true,
-      span: 24
-    })
+    emitUpdate()
   } else {
-    // 普通控件
-    emit('drop', {
-      widgetType: widget.type,
-      label: widget.label,
-      fieldName: '',
-      span: 6,
-      props: {
-        visible: true,
-        required: false,
-        readonly: false,
-        default: ''
-      }
-    })
+    // 非新控件（移动操作），直接触发更新以同步状态
+    emitUpdate()
   }
 }
 
-const updateItem = (index, newVal) => {
-  const newItems = [...props.items]
-  newItems[index] = newVal
-  emit('update', newItems)
+const onDragEnd = () => {
+  emitUpdate()
 }
 
-const onChildDrop = (parentIndex, payload) => {
-  // 处理子控件添加到容器
-  const widget = payload.widget
-  const newItem = {
-    widgetType: widget.type,
-    label: widget.label,
-    fieldName: '',
-    span: 12,
-    props: {
-      visible: true,
-      required: false,
-      readonly: false,
-      default: ''
-    }
+const emitUpdate = () => {
+  const cleanItems = localItems.value.map(({ isNew, ...rest }) => rest)
+  emit('update', cleanItems)
+}
+
+const updateItem = (id, newVal) => {
+  const index = localItems.value.findIndex(item => item.id === id)
+  if (index !== -1) {
+    localItems.value[index] = newVal
+    emitUpdate()
   }
-  
-  const parent = props.items[parentIndex]
-  const children = [...(parent.children || []), newItem]
-  
-  updateItem(parentIndex, { ...parent, children })
 }
 
-const addChildToContainer = (parentIndex, widget) => {
+const removeItem = (id) => {
+  const index = localItems.value.findIndex(item => item.id === id)
+  if (index !== -1) {
+    localItems.value.splice(index, 1)
+    emitUpdate()
+  }
+}
+
+const addChildToContainer = (parentId, widget) => {
+  const parent = localItems.value.find(item => item.id === parentId)
+  if (!parent) return
+  
   const newChild = {
+    id: `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     widgetType: widget.type,
     label: widget.label,
     fieldName: '',
@@ -235,9 +161,12 @@ const addChildToContainer = (parentIndex, widget) => {
     }
   }
   
-  const parent = props.items[parentIndex]
-  const children = [...(parent.children || []), newChild]
-  updateItem(parentIndex, { ...parent, children })
+  const updatedParent = {
+    ...parent,
+    children: [...(parent.children || []), newChild]
+  }
+  
+  updateItem(parentId, updatedParent)
 }
 </script>
 

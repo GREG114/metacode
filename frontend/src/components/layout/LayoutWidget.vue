@@ -47,9 +47,9 @@
                   @update="(newVal) => updateChild(index, newVal)"
                   @remove="removeChild(index)"
                   @select="(info) => emit('select', { parentIndex: index, child: info })"
-                  @child-dragstart="(info) => emit('child-dragstart', { ...info, containerIndex: props.item.__parentIndex__ })"
+                  @child-dragstart="(info) => emit('child-dragstart', { ...info })"
                   @child-dragend="(info) => emit('child-dragend', info)"
-                  @child-drop-out="(info) => emit('child-drop-out', { ...info, fromContainerIndex: props.item.__parentIndex__ })"
+                  @child-drop-out="(info) => emit('child-drop-out', { ...info })"
                 />
               </el-col>
             </template>
@@ -59,7 +59,7 @@
           </div>
         </template>
 
-        <!-- 横向布局 - 不用 el-col，直接用 flex div -->
+        <!-- 横向布局 -->
         <template v-else>
           <draggable
             v-model="localChildren"
@@ -84,9 +84,9 @@
                   @update="(newVal) => updateChild(index, newVal)"
                   @remove="removeChild(index)"
                   @select="(info) => emit('select', { parentIndex: index, child: info })"
-                  @child-dragstart="(info) => emit('child-dragstart', { ...info, containerIndex: props.item.__parentIndex__ })"
+                  @child-dragstart="(info) => emit('child-dragstart', { ...info })"
                   @child-dragend="(info) => emit('child-dragend', info)"
-                  @child-drop-out="(info) => emit('child-drop-out', { ...info, fromContainerIndex: props.item.__parentIndex__ })"
+                  @child-drop-out="(info) => emit('child-drop-out', { ...info })"
                 />
               </div>
             </template>
@@ -154,44 +154,37 @@ const containerDirection = computed(() => {
 
 const children = computed(() => props.item.children || [])
 
-// vuedraggable 用的带索引的 children（不用双向computed，用watch）
 const localChildren = ref([])
 
-// 当 props.children 变化时，同步到 localChildren
+// 同步 children，不再添加 __index__ 等元数据
 watch(() => props.item.children, (newChildren) => {
-  localChildren.value = (newChildren || []).map((child, idx) => ({ ...child, __index__: idx, __parentIndex__: props.item.__selfIndex__ }))
+  localChildren.value = (newChildren || []).map(child => ({
+    ...child,
+    id: child.id || `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }))
 }, { immediate: true, deep: true })
 
-// 当 vuedraggable 内部排序变化时，手动 emit update
-// vuedraggable 接受新元素时触发（从工具箱拖入或从其他容器拖入）
 const onChildAdded = (evt) => {
   const newItem = localChildren.value[evt.newIndex]
   
-  // 只有从工具箱拖入的新控件才需要初始化
   if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
-    const canHaveChildren = newItem.canHaveChildren
-    
-    const baseItem = {
-      id: newItem.id, // 保留唯一ID
-      isNew: false
-    }
+    const canHaveChildren = newItem.isContainer
     
     if (canHaveChildren) {
-      // 容器控件
       localChildren.value[evt.newIndex] = {
-        ...baseItem,
+        id: newItem.id,
         widgetType: widgetType,
         direction: newItem.direction || 'column',
         label: widgetType === 'panel' ? '新面板' : '',
         children: [],
         expanded: true,
-        span: 24
+        span: 24,
+        isNew: false
       }
     } else {
-      // 普通控件
       localChildren.value[evt.newIndex] = {
-        ...baseItem,
+        id: newItem.id,
         widgetType: widgetType,
         label: newItem.label || '',
         fieldName: '',
@@ -201,22 +194,23 @@ const onChildAdded = (evt) => {
           required: false,
           readonly: false,
           default: ''
-        }
+        },
+        isNew: false
       }
     }
+    emitChildUpdate()
+  } else {
+    emitChildUpdate()
   }
-  
-  // 无论是新控件还是移动，都触发更新
-  onChildDragEnd(evt)
 }
 
-const onChildDragEnd = (evt) => {
-  // 只清理内部元数据，保留 id 和业务数据
-  const newChildren = localChildren.value.map(item => {
-    const { __index__: i, __parentIndex__: pi, __selfIndex__: si, isNew, ...rest } = item
-    return rest
-  })
-  emit('update', { ...toRaw(props.item), children: newChildren })
+const onChildDragEnd = () => {
+  emitChildUpdate()
+}
+
+const emitChildUpdate = () => {
+  const cleanChildren = localChildren.value.map(({ isNew, ...rest }) => rest)
+  emit('update', { ...toRaw(props.item), children: cleanChildren })
 }
 
 const widgetLabels = {
@@ -239,79 +233,9 @@ const toggleExpand = () => {
   }
 }
 
-// 子控件拖拽开始
-const onChildDragStart = (event, idx, child) => {
-  event.dataTransfer.setData('drag-source', 'child')
-  event.dataTransfer.setData('child-index', idx)
-  emit('child-dragstart', { 
-    index: idx, 
-    child: child,
-    parentItem: props.item
-  })
-}
-
-const onContainerDrop = (event) => {
-  const widgetData = event.dataTransfer.getData('widget')
-  const itemIndex = event.dataTransfer.getData('item-index')
-  const dragSource = event.dataTransfer.getData('drag-source')
-  const currentChildren = props.item.children || []
-  
-  // 从画布拖拽已有控件到容器
-  if (itemIndex !== null && dragSource === 'canvas') {
-    // 需要通知父组件处理控件移动
-    emit('move-to-container', {
-      fromIndex: parseInt(itemIndex),
-      toContainer: props.item,
-      toChildren: currentChildren
-    })
-    return
-  }
-  
-  if (!widgetData) return
-  
-  const widget = JSON.parse(widgetData)
-  
-  // 允许容器嵌套
-  if (widget.isContainer) {
-    const newChild = {
-      widgetType: widget.type,
-      direction: widget.direction || 'column',  // 新格式：使用 direction 属性
-      label: widget.type === 'panel' ? '新面板' : '',
-      children: [],
-      expanded: true,
-      span: 24
-    }
-    const newChildren = [...currentChildren, newChild]
-    emit('update', { ...props.item, children: newChildren })
-    return
-  }
-  
-  // 添加普通控件
-  const newChild = {
-    widgetType: widget.type,
-    label: widget.label,
-    fieldName: '',
-    span: 12,
-    props: {
-      visible: true,
-      required: false,
-      readonly: false,
-      default: ''
-    }
-  }
-  
-  const newChildren = [...(props.item.children || []), newChild]
-  emit('update', { ...props.item, children: newChildren })
-}
-
 const onChildClick = (event, idx, child) => {
   event.stopPropagation()
-  console.log('[LayoutWidget] onChildClick:', idx, child)
   emit('select', { parentIndex: idx, child: child })
-}
-
-const testClick = (idx) => {
-  console.log('[LayoutWidget] testClick:', idx)
 }
 
 const updateChild = (index, newVal) => {

@@ -32,40 +32,43 @@ import draggable from 'vuedraggable'
 
 const emit = defineEmits(['drag-start', 'widget-click'])
 
-// 生成唯一ID
+// 生成唯一 ID
 const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-// 克隆时添加唯一ID
+// 克隆时添加唯一 ID 并标记为新控件
 const cloneWidget = (widget) => ({
   ...widget,
-  id: generateId()
+  id: generateId(),
+  isNew: true, // 明确标记为新控件
+  isContainer: widget.canHaveChildren,
+  direction: widget.direction || 'column'
 })
 
 const widgets = ref([
-  { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true, isNew: true },
-  { type: 'text', label: '单行文本', icon: 'Edit', compatibleTypes: ['text', 'textarea'], isNew: true },
-  { type: 'textarea', label: '文本域', icon: 'Document', compatibleTypes: ['text'], isNew: true },
-  { type: 'number', label: '数字', icon: 'Odometer', compatibleTypes: ['integer', 'decimal'], isNew: true },
-  { type: 'date', label: '日期', icon: 'Calendar', compatibleTypes: ['date'], isNew: true },
-  { type: 'switch', label: '开关', icon: 'Switch', compatibleTypes: ['boolean'], isNew: true },
-  { type: 'select', label: '下拉选择', icon: 'ArrowDown', compatibleTypes: ['select'], isNew: true },
+  { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true },
+  { type: 'text', label: '单行文本', icon: 'Edit', compatibleTypes: ['text', 'textarea'] },
+  { type: 'textarea', label: '文本域', icon: 'Document', compatibleTypes: ['text'] },
+  { type: 'number', label: '数字', icon: 'Odometer', compatibleTypes: ['integer', 'decimal'] },
+  { type: 'date', label: '日期', icon: 'Calendar', compatibleTypes: ['date'] },
+  { type: 'switch', label: '开关', icon: 'Switch', compatibleTypes: ['boolean'] },
+  { type: 'select', label: '下拉选择', icon: 'ArrowDown', compatibleTypes: ['select'] },
 ])
 
 const onDragStart = (event, widget) => {
-  // 容器需要额外传递属性
   const widgetData = {
     ...widget,
     isContainer: widget.canHaveChildren,
-    direction: widget.direction || 'column'  // 传递方向属性
+    direction: widget.direction || 'column'
   }
   event.dataTransfer.setData('widget', JSON.stringify(widgetData))
   emit('drag-start', widget)
 }
 
-// 点击控件添加到画布（兼容点击添加）
 const onWidgetClick = (widget) => {
   emit('widget-click', {
     ...widget,
+    id: generateId(),
+    isNew: true,
     isContainer: widget.canHaveChildren,
     direction: widget.direction || 'column'
   })
