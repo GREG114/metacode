@@ -22,34 +22,77 @@
       <div v-if="item.widgetType !== 'panel' || expanded" 
            class="container-body"
            :class="{ 'is-row': containerDirection === 'row', 'is-column': containerDirection === 'column' }"
-           @dragover.prevent="emit('dragenter')"
+           @dragover.prevent
            @drop.stop="onContainerDrop"
       >
-        <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
-          拖拽控件到此处
-        </div>
-        <el-row v-else :gutter="16">
-          <el-col
-            v-for="(child, idx) in children"
-            :key="idx"
-            :span="child.span || 6"
-            class="child-col"
-            draggable="true"
-            @click.stop="(event) => onChildClick(event, idx, child)"
-            @dragstart.stop="(event) => onChildDragStart(event, idx, child)"
+        <!-- 纵向布局 -->
+        <template v-if="containerDirection === 'column'">
+          <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
+            拖拽控件到此处
+          </div>
+          <draggable
+            v-else
+            v-model="localChildren"
+            item-key="__index__"
+            ghost-class="ghost"
+            :animation="200"
+            group="layout"
+            @end="onChildDragEnd"
           >
-          <LayoutWidget
-            :item="child"
-            :fields="fields"
-            :selected="false"
-            @update="(newVal) => updateChild(idx, newVal)"
-            @remove="removeChild(idx)"
-            @select="(info) => emit('select', { parentIndex: idx, child: info })"
-            @child-dragstart="(info) => emit('child-dragstart', info)"
-            @child-dragend="(info) => emit('child-dragend', info)"
-          />
-          </el-col>
-        </el-row>
+            <template #item="{ element, index }">
+              <el-col
+                :span="element.span || 6"
+                class="child-col"
+                @click.stop="(event) => onChildClick(event, index, element)"
+              >
+                <LayoutWidget
+                  :item="element"
+                  :fields="fields"
+                  :selected="false"
+                  @update="(newVal) => updateChild(index, newVal)"
+                  @remove="removeChild(index)"
+                  @select="(info) => emit('select', { parentIndex: index, child: info })"
+                  @child-dragstart="(info) => emit('child-dragstart', { ...info, containerIndex: props.item.__parentIndex__ })"
+                  @child-dragend="(info) => emit('child-dragend', info)"
+                  @child-drop-out="(info) => emit('child-drop-out', { ...info, fromContainerIndex: props.item.__parentIndex__ })"
+                />
+              </el-col>
+            </template>
+          </draggable>
+        </template>
+
+        <!-- 横向布局 -->
+        <template v-else>
+          <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">
+            拖拽控件到此处
+          </div>
+          <draggable
+            v-else
+            v-model="localChildren"
+            item-key="__index__"
+            ghost-class="ghost"
+            :animation="200"
+            group="layout"
+            class="horizontal-drag"
+            @end="onChildDragEnd"
+          >
+            <template #item="{ element, index }">
+              <div class="horizontal-item" @click.stop="(event) => onChildClick(event, index, element)">
+                <LayoutWidget
+                  :item="element"
+                  :fields="fields"
+                  :selected="false"
+                  @update="(newVal) => updateChild(index, newVal)"
+                  @remove="removeChild(index)"
+                  @select="(info) => emit('select', { parentIndex: index, child: info })"
+                  @child-dragstart="(info) => emit('child-dragstart', { ...info, containerIndex: props.item.__parentIndex__ })"
+                  @child-dragend="(info) => emit('child-dragend', info)"
+                  @child-drop-out="(info) => emit('child-drop-out', { ...info, fromContainerIndex: props.item.__parentIndex__ })"
+                />
+              </div>
+            </template>
+          </draggable>
+        </template>
       </div>
     </template>
     
@@ -68,6 +111,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import draggable from 'vuedraggable'
 
 const props = defineProps({
   item: {
@@ -84,7 +128,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update', 'remove', 'child-add', 'dragenter', 'select', 'move-to-container', 'child-dragstart', 'child-dragend'])
+const emit = defineEmits(['update', 'remove', 'child-add', 'dragenter', 'select', 'move-to-container', 'child-dragstart', 'child-dragend', 'child-drop-out'])
 
 const expanded = ref(true)
 
@@ -107,6 +151,22 @@ const containerDirection = computed(() => {
 })
 
 const children = computed(() => props.item.children || [])
+
+// vuedraggable 用的带索引的 children
+const localChildren = computed({
+  get: () => children.value.map((child, idx) => ({ ...child, __index__: idx, __parentIndex__: props.item.__selfIndex__ })),
+  set: (val) => {
+    const newChildren = val.map(item => {
+      const { __index__, __parentIndex__, ...rest } = item
+      return rest
+    })
+    emit('update', { ...props.item, children: newChildren })
+  }
+})
+
+const onChildDragEnd = (evt) => {
+  console.log('[LayoutWidget] child drag end:', evt)
+}
 
 const widgetLabels = {
   text: '单行文本',
