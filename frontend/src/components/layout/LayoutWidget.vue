@@ -325,11 +325,18 @@ const removeChild = (index) => {
 
 .container-body.row {
   display: flex;
+  flex-direction: row;
   gap: 16px;
+  align-items: stretch;
 }
 
 .container-body.row .el-col {
   flex: 1;
+}
+
+.container-body.row .horizontal-item {
+  flex: 1;
+  min-width: 0;
 }
 
 .container-body.column {
