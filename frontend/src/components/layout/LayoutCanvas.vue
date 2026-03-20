@@ -12,36 +12,42 @@
         从左侧拖拽控件到此处
       </div>
       
-      <el-row :gutter="16">
-        <el-col
-          v-for="(item, index) in items"
-          :key="index"
-          :span="item.span || (item.widgetType === 'panel' ? 24 : 6)"
-          class="layout-col"
-          :class="{ active: selectedIndex === index }"
-          draggable="true"
-          @click="emit('select', index)"
-          @dragstart="(e) => onItemDragStart(e, index)"
-        >
+      <draggable
+        v-model="localItems"
+        item-key="__index__"
+        ghost-class="ghost"
+        drag-class="dragging"
+        :animation="200"
+        @end="onDragEnd"
+      >
+        <template #item="{ element, index }">
+          <el-col
+            :span="element.span || (element.widgetType === 'panel' ? 24 : 6)"
+            class="layout-col"
+            :class="{ active: selectedIndex === index }"
+            @click="emit('select', index)"
+          >
             <LayoutWidget
-            :item="item"
-            :fields="fields"
-            :selected="selectedIndex === index"
-            @update="(newVal) => updateItem(index, newVal)"
-            @remove="emit('remove', index)"
-            @child-add="(widget) => addChildToContainer(index, widget)"
-            @select="(info) => emit('select', { containerIndex: index, childIndex: info.parentIndex, child: info.child })"
-            @move-to-container="(info) => emit('move-to-container', { fromIndex: index, ...info })"
-            @child-dragstart="(info) => emit('child-dragstart', { containerIndex: index, ...info })"
-            @child-dragend="(info) => emit('child-dragend', { containerIndex: index, ...info })"
-          />
-        </el-col>
-      </el-row>
+              :item="element"
+              :fields="fields"
+              :selected="selectedIndex === index"
+              @update="(newVal) => updateItem(index, newVal)"
+              @remove="emit('remove', index)"
+              @child-add="(widget) => addChildToContainer(index, widget)"
+              @select="(info) => emit('select', { containerIndex: index, childIndex: info.parentIndex, child: info.child })"
+              @move-to-container="(info) => emit('move-to-container', { fromIndex: index, ...info })"
+              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: index, ...info })"
+              @child-dragend="(info) => emit('child-dragend', { containerIndex: index, ...info })"
+            />
+          </el-col>
+        </template>
+      </draggable>
     </div>
   </el-card>
 </template>
 
 <script setup>
+import draggable from 'vuedraggable'
 import LayoutWidget from './LayoutWidget.vue'
 
 const props = defineProps({
@@ -70,17 +76,24 @@ const widgets = [
   { type: 'select', label: '下拉选择' },
 ]
 
-let draggedIndex = null
+// vuedraggable 需要带索引的对象
+const localItems = computed({
+  get: () => props.items.map((item, idx) => ({ ...item, __index__: idx })),
+  set: (val) => {
+    emit('update', val.map(item => {
+      const { __index__, ...rest } = item
+      return rest
+    }))
+  }
+})
 
-const onItemDragStart = (event, index) => {
-  draggedIndex = index
-  event.dataTransfer.setData('item-index', index)
-  event.dataTransfer.setData('drag-source', 'canvas')
+const onDragEnd = (evt) => {
+  // 拖拽结束后的处理，如果需要可以在这里添加
+  console.log('[LayoutCanvas] drag end:', evt)
 }
 
 const onDrop = (event) => {
   const widgetData = event.dataTransfer.getData('widget')
-  const itemIndex = event.dataTransfer.getData('item-index')
   const dragSource = event.dataTransfer.getData('drag-source')
   const childIndex = event.dataTransfer.getData('child-index')
   const containerIndex = event.dataTransfer.getData('container-index')
@@ -91,27 +104,10 @@ const onDrop = (event) => {
       fromContainerIndex: parseInt(containerIndex),
       childIndex: parseInt(childIndex)
     })
-    draggedIndex = null
     return
   }
   
-  // 拖拽已有控件重新排序
-  if (draggedIndex !== null && dragSource === 'canvas') {
-    const fromIndex = draggedIndex
-    const toIndex = props.items.length - 1 // 默认放到末尾
-    
-    if (fromIndex !== toIndex) {
-      const newItems = [...props.items]
-      const [movedItem] = newItems.splice(fromIndex, 1)
-      newItems.splice(toIndex, 0, movedItem)
-      emit('update', newItems)
-    }
-    
-    draggedIndex = null
-    return
-  }
-  
-  // 拖拽新控件
+  // 拖拽新控件（从 WidgetPanel 拖入）
   if (!widgetData) return
   
   const widget = JSON.parse(widgetData)
@@ -216,5 +212,16 @@ const addChildToContainer = (parentIndex, widget) => {
 
 .layout-col.active :deep(.layout-widget) {
   border-color: #409eff;
+}
+
+/* vuedraggable 拖拽占位符样式 */
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+  border: 2px dashed #409eff;
+}
+
+.dragging {
+  opacity: 0.8;
 }
 </style>
