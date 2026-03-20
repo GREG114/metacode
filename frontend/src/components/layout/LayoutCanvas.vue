@@ -3,11 +3,7 @@
     <template #header>
       <span>画布区域（拖拽控件到此处，12栅格）</span>
     </template>
-    <div
-      class="canvas-area"
-      @dragover.prevent
-      @drop="onDrop"
-    >
+    <div class="canvas-area">
       <div v-if="items.length === 0" class="empty-tip">
         从左侧拖拽控件到此处
       </div>
@@ -90,8 +86,8 @@ watch(() => props.items, (newItems) => {
 const onItemAdded = (evt) => {
   const newItem = localItems.value[evt.newIndex]
   
-  // 检查是否是工具箱拖入的新控件（没有 __selfIndex__）
-  if (newItem && (newItem.__selfIndex__ === undefined || newItem.__selfIndex__ === null)) {
+  // 用 isNew 标记判断是否是从工具箱拖入的新控件
+  if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
     const canHaveChildren = newItem.canHaveChildren
     
@@ -127,20 +123,20 @@ const onItemAdded = (evt) => {
     
     // 立即触发更新
     const newItems = localItems.value.map(item => {
-      const { __index__: i, __selfIndex__: s, ...rest } = item
+      const { __index__: i, __selfIndex__: s, isNew, ...rest } = item
       return rest
     })
     emit('update', newItems)
   } else {
-    // 内部排序或从容器移动到画布
+    // 内部排序或从容器移动到画布，直接更新
     onDragEnd(evt)
   }
 }
 
 const onDragEnd = (evt) => {
-  const newItems = localItems.value.map(item => {
-    const { __index__, __selfIndex__, ...rest } = item
-    return rest
+  const newItems = localItems.value.map((item, idx) => {
+    const { __index__: i, __selfIndex__: s, isNew, ...rest } = item
+    return { ...rest, __index__: idx }
   })
   emit('update', newItems)
 }

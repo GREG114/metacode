@@ -167,9 +167,8 @@ watch(() => props.item.children, (newChildren) => {
 const onChildAdded = (evt) => {
   const newItem = localChildren.value[evt.newIndex]
   
-  // 检查是否是工具箱拖入的新控件（没有 __selfIndex__ 或 __selfIndex__ 为 undefined）
-  if (newItem && (newItem.__selfIndex__ === undefined || newItem.__selfIndex__ === null)) {
-    // 这是从工具箱拖入的新控件，需要转换格式
+  // 用 isNew 标记判断是否是从工具箱拖入的新控件
+  if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
     const canHaveChildren = newItem.canHaveChildren
     
@@ -205,20 +204,27 @@ const onChildAdded = (evt) => {
     
     // 立即触发更新
     const newChildren = localChildren.value.map(item => {
-      const { __index__: i, __parentIndex__: pi, __selfIndex__: si, ...rest } = item
+      const { __index__: i, __parentIndex__: pi, __selfIndex__: si, isNew, ...rest } = item
       return rest
     })
     emit('update', { ...toRaw(props.item), children: newChildren })
   } else {
-    // 内部排序或从其他容器移动，直接更新
+    // 从画布或其他容器拖入的控件，需要更新 __parentIndex__
+    if (newItem.__selfIndex__ !== undefined && newItem.__selfIndex__ !== null) {
+      localChildren.value[evt.newIndex] = {
+        ...newItem,
+        __index__: evt.newIndex,
+        __parentIndex__: props.item.__selfIndex__
+      }
+    }
     onChildDragEnd(evt)
   }
 }
 
 const onChildDragEnd = (evt) => {
-  const newChildren = localChildren.value.map(item => {
-    const { __index__: i, __parentIndex__: pi, __selfIndex__: si, ...rest } = item
-    return rest
+  const newChildren = localChildren.value.map((item, idx) => {
+    const { __index__: i, __parentIndex__: pi, __selfIndex__: si, isNew, ...rest } = item
+    return { ...rest, __index__: idx }
   })
   emit('update', { ...toRaw(props.item), children: newChildren })
 }
