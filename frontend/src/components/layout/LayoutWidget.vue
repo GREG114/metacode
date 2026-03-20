@@ -21,7 +21,7 @@
       
       <div v-if="item.widgetType !== 'panel' || expanded" 
            class="container-body"
-           :class="{ 'is-row': containerDirection === 'row', 'is-column': containerDirection === 'column' }"
+           :class="{ 'row': containerDirection === 'row', 'column': containerDirection === 'column' }"
            @dragover.prevent
            @drop.stop="onContainerDrop"
       >
