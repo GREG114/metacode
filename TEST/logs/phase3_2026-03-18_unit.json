@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-18T15:30:00+08:00",
+    "phase": "phase3",
+    "test_type": "unit",
+    "test_suite": "FormLayoutAPITest",
+    "environment": "development"
+  },
+  "summary": {
+    "total_tests": 32,
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 156
+  },
+  "test_cases": [
+    {"name": "test_create_layout", "status": "PASS"},
+    {"name": "test_list_layouts", "status": "PASS"},
+    {"name": "test_activate_layout", "status": "PASS"},
+    {"name": "test_duplicate_layout", "status": "PASS"},
+    {"name": "test_update_layout", "status": "PASS"},
+    {"name": "test_delete_layout", "status": "PASS"},
+    {"name": "test_layout_without_model", "status": "PASS"}
+  ],
+  "environment_info": {
+    "python_version": "3.12.0",
+    "django_version": "5.1.4",
+    "database": "PostgreSQL 15.17",
+    "host": "MiWiFi-RA81-srv"
+  },
+  "conclusion": "全部测试通过，阶段三后端 API 功能正常"
+}

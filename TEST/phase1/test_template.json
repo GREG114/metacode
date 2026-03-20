@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-18T15:30:00+08:00",
+    "phase": "phase1",
+    "test_type": "unit",
+    "test_suite": "DataModelAPITest",
+    "environment": "development"
+  },
+  "summary": {
+    "total_tests": 15,
+    "passed": 14,
+    "failed": 1,
+    "skipped": 0,
+    "duration_ms": 2450
+  },
+  "test_cases": [
+    {
+      "name": "test_create_model_success",
+      "status": "PASS",
+      "duration_ms": 120,
+      "assertions": 5,
+      "description": "创建模型成功",
+      "steps": [
+        "发送 POST /api/models/ 请求",
+        "验证响应状态码 201",
+        "验证返回数据包含模型 ID",
+        "验证模型已保存到数据库",
+        "验证创建时间字段存在"
+      ]
+    },
+    {
+      "name": "test_create_model_duplicate_name",
+      "status": "FAIL",
+      "duration_ms": 85,
+      "description": "创建重复名称的模型应失败",
+      "error": {
+        "type": "IntegrityError",
+        "message": "duplicate key value violates unique constraint",
+        "detail": "Key (name)=(test_model) already exists.",
+        "stack_trace": "Traceback (most recent call last):\n  File \"/path/to/test.py\", line 45, in test_create_model_duplicate_name\n    response = self.client.post('/api/models/', data, format='json')\n  ...",
+        "severity": "MEDIUM"
+      },
+      "context": {
+        "request": {
+          "method": "POST",
+          "url": "/api/models/",
+          "headers": {"Content-Type": "application/json"},
+          "body": {"name": "test_model", "description": "测试模型"}
+        },
+        "response": null,
+        "database_state": {
+          "existing_model": {"id": 1, "name": "test_model", "description": "现有模型"}
+        }
+      },
+      "recommendations": [
+        "在 API 层增加重复名称检查",
+        "返回更友好的错误信息",
+        "添加测试数据清理步骤"
+      ]
+    }
+  ],
+  "environment_info": {
+    "python_version": "3.12.0",
+    "django_version": "5.1.4",
+    "database": "PostgreSQL 15.17",
+    "host": "MiWiFi-RA81-srv"
+  },
+  "next_steps": [
+    "修复失败的测试用例",
+    "重新运行测试套件",
+    "分析其他潜在问题"
+  ]
+}
