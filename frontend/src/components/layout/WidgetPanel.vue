@@ -3,22 +3,6 @@
     <template #header>控件列表</template>
     
     <div class="widget-section">
-      <div class="section-title">容器</div>
-      <div class="widget-list">
-        <div
-          v-for="c in containers"
-          :key="c.type"
-          class="widget-item container-item"
-          draggable="true"
-          @dragstart="onDragStart($event, { ...c, isContainer: true })"
-        >
-          <el-icon><component :is="c.icon" /></el-icon>
-          <span>{{ c.label }}</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="widget-section">
       <div class="section-title">字段</div>
       <div class="widget-list">
         <div
@@ -39,12 +23,8 @@
 <script setup>
 const emit = defineEmits(['drag-start'])
 
-const containers = [
-  { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true },
-]
-console.log('[WidgetPanel] containers:', containers)
-
 const widgets = [
+  { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true },
   { type: 'text', label: '单行文本', icon: 'Edit', compatibleTypes: ['text', 'textarea'] },
   { type: 'textarea', label: '文本域', icon: 'Document', compatibleTypes: ['text'] },
   { type: 'number', label: '数字', icon: 'Odometer', compatibleTypes: ['integer', 'decimal'] },
