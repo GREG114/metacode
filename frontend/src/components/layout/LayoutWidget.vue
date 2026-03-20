@@ -27,7 +27,7 @@
         <template v-if="containerDirection === 'column'">
           <draggable
             v-model="localChildren"
-            item-key="__index__"
+            item-key="id"
             ghost-class="ghost"
             :animation="200"
             :group="{ name: 'layout', pull: true, put: true }"
@@ -63,7 +63,7 @@
         <template v-else>
           <draggable
             v-model="localChildren"
-            item-key="__index__"
+            item-key="id"
             ghost-class="ghost"
             :animation="200"
             :group="{ name: 'layout', pull: true, put: true }"
@@ -167,26 +167,31 @@ watch(() => props.item.children, (newChildren) => {
 const onChildAdded = (evt) => {
   const newItem = localChildren.value[evt.newIndex]
   
-  // 用 isNew 标记判断是否是从工具箱拖入的新控件
+  // 只有从工具箱拖入的新控件才需要初始化
   if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
     const canHaveChildren = newItem.canHaveChildren
     
+    const baseItem = {
+      id: newItem.id, // 保留唯一ID
+      isNew: false
+    }
+    
     if (canHaveChildren) {
       // 容器控件
       localChildren.value[evt.newIndex] = {
+        ...baseItem,
         widgetType: widgetType,
         direction: newItem.direction || 'column',
         label: widgetType === 'panel' ? '新面板' : '',
         children: [],
         expanded: true,
-        span: 24,
-        __index__: evt.newIndex,
-        __parentIndex__: props.item.__selfIndex__
+        span: 24
       }
     } else {
       // 普通控件
       localChildren.value[evt.newIndex] = {
+        ...baseItem,
         widgetType: widgetType,
         label: newItem.label || '',
         fieldName: '',
@@ -196,35 +201,20 @@ const onChildAdded = (evt) => {
           required: false,
           readonly: false,
           default: ''
-        },
-        __index__: evt.newIndex,
-        __parentIndex__: props.item.__selfIndex__
+        }
       }
     }
-    
-    // 立即触发更新
-    const newChildren = localChildren.value.map(item => {
-      const { __index__: i, __parentIndex__: pi, __selfIndex__: si, isNew, ...rest } = item
-      return rest
-    })
-    emit('update', { ...toRaw(props.item), children: newChildren })
-  } else {
-    // 从画布或其他容器拖入的控件，需要更新 __parentIndex__
-    if (newItem.__selfIndex__ !== undefined && newItem.__selfIndex__ !== null) {
-      localChildren.value[evt.newIndex] = {
-        ...newItem,
-        __index__: evt.newIndex,
-        __parentIndex__: props.item.__selfIndex__
-      }
-    }
-    onChildDragEnd(evt)
   }
+  
+  // 无论是新控件还是移动，都触发更新
+  onChildDragEnd(evt)
 }
 
 const onChildDragEnd = (evt) => {
-  const newChildren = localChildren.value.map((item, idx) => {
+  // 只清理内部元数据，保留 id 和业务数据
+  const newChildren = localChildren.value.map(item => {
     const { __index__: i, __parentIndex__: pi, __selfIndex__: si, isNew, ...rest } = item
-    return { ...rest, __index__: idx }
+    return rest
   })
   emit('update', { ...toRaw(props.item), children: newChildren })
 }

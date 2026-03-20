@@ -8,7 +8,8 @@
         v-model="widgets"
         :group="{ name: 'layout', pull: 'clone', put: false }"
         :sort="false"
-        item-key="type"
+        :clone="cloneWidget"
+        item-key="id"
         class="widget-list"
       >
         <template #item="{ element }">
@@ -30,6 +31,15 @@ import { ref } from 'vue'
 import draggable from 'vuedraggable'
 
 const emit = defineEmits(['drag-start', 'widget-click'])
+
+// 生成唯一ID
+const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+// 克隆时添加唯一ID
+const cloneWidget = (widget) => ({
+  ...widget,
+  id: generateId()
+})
 
 const widgets = ref([
   { type: 'panel', label: '面板', icon: 'FolderOpened', canHaveChildren: true, isNew: true },

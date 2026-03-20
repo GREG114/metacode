@@ -10,7 +10,7 @@
       
       <draggable
         v-model="localItems"
-        item-key="__index__"
+        item-key="id"
         ghost-class="ghost"
         drag-class="dragging"
         :animation="200"
@@ -78,34 +78,47 @@ const widgets = [
 // vuedraggable 用的 items（用 watch 模式）
 const localItems = ref([])
 
+// 生成唯一ID（如果没有的话）
+const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
 watch(() => props.items, (newItems) => {
-  localItems.value = (newItems || []).map((item, idx) => ({ ...item, __index__: idx, __selfIndex__: idx }))
+  localItems.value = (newItems || []).map((item, idx) => ({
+    ...item,
+    id: item.id || generateId(),
+    __index__: idx,
+    __selfIndex__: idx
+  }))
 }, { immediate: true, deep: true })
 
 // vuedraggable 接受新元素时触发（从工具箱拖入或从容器拖出）
 const onItemAdded = (evt) => {
   const newItem = localItems.value[evt.newIndex]
   
-  // 用 isNew 标记判断是否是从工具箱拖入的新控件
+  // 只有从工具箱拖入的新控件才需要初始化
   if (newItem && newItem.isNew) {
     const widgetType = newItem.type || newItem.widgetType
     const canHaveChildren = newItem.canHaveChildren
     
+    const baseItem = {
+      id: newItem.id, // 保留唯一ID
+      isNew: false
+    }
+    
     if (canHaveChildren) {
       // 容器控件
       localItems.value[evt.newIndex] = {
+        ...baseItem,
         widgetType: widgetType,
         direction: newItem.direction || 'column',
         label: widgetType === 'panel' ? '新面板' : '',
         children: [],
         expanded: true,
-        span: 24,
-        __index__: evt.newIndex,
-        __selfIndex__: evt.newIndex
+        span: 24
       }
     } else {
       // 普通控件
       localItems.value[evt.newIndex] = {
+        ...baseItem,
         widgetType: widgetType,
         label: newItem.label || '',
         fieldName: '',
@@ -115,28 +128,20 @@ const onItemAdded = (evt) => {
           required: false,
           readonly: false,
           default: ''
-        },
-        __index__: evt.newIndex,
-        __selfIndex__: evt.newIndex
+        }
       }
     }
-    
-    // 立即触发更新
-    const newItems = localItems.value.map(item => {
-      const { __index__: i, __selfIndex__: s, isNew, ...rest } = item
-      return rest
-    })
-    emit('update', newItems)
-  } else {
-    // 内部排序或从容器移动到画布，直接更新
-    onDragEnd(evt)
   }
+  
+  // 无论是新控件还是移动，都触发更新
+  onDragEnd(evt)
 }
 
 const onDragEnd = (evt) => {
-  const newItems = localItems.value.map((item, idx) => {
+  // 只清理内部元数据，保留 id 和业务数据
+  const newItems = localItems.value.map(item => {
     const { __index__: i, __selfIndex__: s, isNew, ...rest } = item
-    return { ...rest, __index__: idx }
+    return rest
   })
   emit('update', newItems)
 }
