@@ -11,7 +11,7 @@
     </div>
 
     <div class="editor-container">
-      <WidgetPanel @drag-start="onWidgetDragStart" />
+      <WidgetPanel />
       
       <LayoutCanvas 
         :items="layoutItems"
@@ -82,10 +82,6 @@ const selectedItem = computed(() => {
   if (selectedIndex.value === null) return null
   return layoutItems.value[selectedIndex.value]
 })
-
-const onWidgetDragStart = (widget) => {
-  // WidgetPanel 内部处理 dragstart
-}
 
 const onWidgetDrop = (widget) => {
   // 检查是否是容器 (支持旧的 row/column 和新的 container)
@@ -183,13 +179,6 @@ const onChildDragStart = (event, info) => {
 // 子控件拖拽结束
 const onChildDragEnd = (event, info) => {
   // 可以在这里处理拖拽结束后的清理
-}
-
-const selectItem = (index) => {
-  selectedIndex.value = index
-  // 清除嵌套选中
-  selectedChildIndex.value = null
-  selectedParentIndex.value = null
 }
 
 const selectedChildIndex = ref(null)
