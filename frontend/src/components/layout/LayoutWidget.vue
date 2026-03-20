@@ -156,20 +156,21 @@ const containerDirection = computed(() => {
 
 const children = computed(() => props.item.children || [])
 
-// vuedraggable 用的带索引的 children
-const localChildren = computed({
-  get: () => children.value.map((child, idx) => ({ ...child, __index__: idx, __parentIndex__: props.item.__selfIndex__ })),
-  set: (val) => {
-    const newChildren = val.map(item => {
-      const { __index__, __parentIndex__, ...rest } = item
-      return rest
-    })
-    emit('update', { ...props.item, children: newChildren })
-  }
-})
+// vuedraggable 用的带索引的 children（不用双向computed，用watch）
+const localChildren = ref([])
 
+// 当 props.children 变化时，同步到 localChildren
+watch(() => props.item.children, (newChildren) => {
+  localChildren.value = (newChildren || []).map((child, idx) => ({ ...child, __index__: idx, __parentIndex__: props.item.__selfIndex__ }))
+}, { immediate: true, deep: true })
+
+// 当 vuedraggable 内部排序变化时，手动 emit update
 const onChildDragEnd = (evt) => {
-  console.log('[LayoutWidget] child drag end:', evt)
+  const newChildren = localChildren.value.map(item => {
+    const { __index__, __parentIndex__, __selfIndex__, ...rest } = item
+    return rest
+  })
+  emit('update', { ...toRaw(props.item), children: newChildren })
 }
 
 const widgetLabels = {

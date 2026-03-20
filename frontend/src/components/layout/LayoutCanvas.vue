@@ -32,13 +32,13 @@
               :item="element"
               :fields="fields"
               :selected="selectedIndex === index"
-              @update="(newVal) => updateItem(index, newVal)"
+              @update="(newVal) => updateItem(element.__selfIndex__, newVal)"
               @remove="emit('remove', index)"
-              @child-add="(widget) => addChildToContainer(index, widget)"
-              @select="(info) => emit('select', { containerIndex: index, childIndex: info.parentIndex, child: info.child })"
-              @move-to-container="(info) => emit('move-to-container', { fromIndex: index, ...info })"
-              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: index, ...info })"
-              @child-dragend="(info) => emit('child-dragend', { containerIndex: index, ...info })"
+              @child-add="(widget) => addChildToContainer(element.__selfIndex__, widget)"
+              @select="(info) => emit('select', { containerIndex: element.__selfIndex__, childIndex: info.parentIndex, child: info.child })"
+              @move-to-container="(info) => emit('move-to-container', { fromIndex: element.__selfIndex__, ...info })"
+              @child-dragstart="(info) => emit('child-dragstart', { containerIndex: element.__selfIndex__, ...info })"
+              @child-dragend="(info) => emit('child-dragend', { containerIndex: element.__selfIndex__, ...info })"
             />
           </el-col>
         </template>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, toRaw } from 'vue'
 import draggable from 'vuedraggable'
 import LayoutWidget from './LayoutWidget.vue'
 
@@ -78,20 +78,19 @@ const widgets = [
   { type: 'select', label: '下拉选择' },
 ]
 
-// vuedraggable 需要带索引的对象
-const localItems = computed({
-  get: () => props.items.map((item, idx) => ({ ...item, __index__: idx })),
-  set: (val) => {
-    emit('update', val.map(item => {
-      const { __index__, ...rest } = item
-      return rest
-    }))
-  }
-})
+// vuedraggable 用的 items（用 watch 模式）
+const localItems = ref([])
+
+watch(() => props.items, (newItems) => {
+  localItems.value = (newItems || []).map((item, idx) => ({ ...item, __index__: idx, __selfIndex__: idx }))
+}, { immediate: true, deep: true })
 
 const onDragEnd = (evt) => {
-  // 拖拽结束后的处理，如果需要可以在这里添加
-  console.log('[LayoutCanvas] drag end:', evt)
+  const newItems = localItems.value.map(item => {
+    const { __index__, __selfIndex__, ...rest } = item
+    return rest
+  })
+  emit('update', newItems)
 }
 
 const onDrop = (event) => {
