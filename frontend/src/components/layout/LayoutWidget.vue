@@ -25,6 +25,10 @@
            @dragover.prevent
            @drop.stop="onContainerDrop"
       >
+        <!-- DEBUG: 显示当前方向 -->
+        <div v-if="item.widgetType === 'panel'" style="position:absolute;top:0;right:0;background:red;color:white;font-size:10px;padding:2px 4px;z-index:999">
+          dir: {{ containerDirection }}
+        </div>
         <!-- 纵向布局 -->
         <template v-if="containerDirection === 'column'">
           <div v-if="children.length === 0" class="empty-tip" @dragover.prevent @drop.stop="onContainerDrop">

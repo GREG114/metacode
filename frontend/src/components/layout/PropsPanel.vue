@@ -21,7 +21,7 @@
           </el-form-item>
           
           <el-form-item label="排列方向">
-            <el-radio-group v-model="localItem.direction" @change="emitUpdate">
+            <el-radio-group v-model="localItem.direction" @update:modelValue="emitUpdate">
               <el-radio-button value="column">纵向</el-radio-button>
               <el-radio-button value="row">横向</el-radio-button>
             </el-radio-group>
