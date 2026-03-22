@@ -9,7 +9,7 @@ pkill -f "manage.py runserver" || true
 git pull
 
 # 前端构建
-cd frontend && npm run build && cd ..
+cd frontend && rm -rf dist && npm run build && cd ..
 
 # 复制前端到 Django templates
 rm -rf templates/*
