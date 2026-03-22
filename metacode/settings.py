@@ -70,7 +70,7 @@ ROOT_URLCONF = "metacode.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "frontend" / "dist"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -137,7 +137,7 @@ USE_TZ = True
 
 STATIC_URL = "/assets/"
 STATICFILES_DIRS = [
-    BASE_DIR / "templates" / "assets",
+    BASE_DIR / "frontend" / "dist" / "assets",
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
