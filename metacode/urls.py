@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
-import os
 
 def serve_index(request):
     """返回前端首页（SPA fallback）"""
@@ -13,7 +12,7 @@ def serve_index(request):
         return HttpResponse("Frontend not built. Run 'npm run build' in frontend/", status=500)
 
 urlpatterns = [
-    path("", serve_index),  # 根路径返回前端首页
+    path("", serve_index),  # 根路径返回前端首页（SPA fallback）
     path("admin/", admin.site.urls),
     path("api/", include("core.urls")),
 ]
