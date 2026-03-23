@@ -219,18 +219,3 @@ const handleReset = () => {
 onMounted(fetchForm)
 </script>
 
-<style scoped>
-.form-fill {
-  padding: 20px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-.header h2 {
-  margin: 0;
-  flex: 1;
-}
-</style>

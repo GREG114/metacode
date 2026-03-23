@@ -76,17 +76,3 @@ const formatDate = (date) => {
 onMounted(fetchModels)
 </script>
 
-<style scoped>
-.model-list {
-  padding: 20px;
-}
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.header h2 {
-  margin: 0;
-}
-</style>

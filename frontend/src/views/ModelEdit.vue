@@ -159,26 +159,3 @@ const fetchData = async () => {
 onMounted(fetchData)
 </script>
 
-<style scoped>
-.model-edit {
-  padding: 20px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-.header h2 {
-  margin: 0;
-  flex: 1;
-}
-.fields-card {
-  margin-top: 20px;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-</style>

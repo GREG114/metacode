@@ -45,10 +45,3 @@ defineProps({
 const emit = defineEmits(['load', 'activate', 'delete', 'create'])
 </script>
 
-<style scoped>
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-</style>

@@ -84,18 +84,3 @@ const formatDate = (date) => {
 onMounted(fetchData)
 </script>
 
-<style scoped>
-.form-data-list {
-  padding: 20px;
-}
-.header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-.header h2 {
-  margin: 0;
-  flex: 1;
-}
-</style>

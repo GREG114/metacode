@@ -113,8 +113,3 @@ const flatItems = computed(() => {
 })
 </script>
 
-<style scoped>
-.preview-form {
-  padding: 20px;
-}
-</style>

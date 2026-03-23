@@ -183,19 +183,3 @@ const emitUpdate = () => {
 }
 </script>
 
-<style scoped>
-.props-panel {
-  height: 450px;
-  overflow-y: auto;
-}
-
-.props-form {
-  padding: 10px;
-}
-
-.no-selection {
-  text-align: center;
-  color: #909399;
-  padding: 40px;
-}
-</style>
