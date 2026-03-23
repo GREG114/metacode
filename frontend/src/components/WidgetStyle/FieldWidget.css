@@ -1,0 +1,69 @@
+/* frontend/src/components/WidgetStyle/FieldWidget.css */
+
+/* 单行文本控件容器 */
+.text-widget {
+  position: relative;
+  background: #fff;
+  border: 1px solid #3c7af6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 悬停效果 */
+.text-widget:hover {
+  border-color: #c0c4cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* 选中状态 */
+.text-widget.selected {
+  border-color: #409eff;
+  background: #ecf5ff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+/* 控件头部 */
+.text-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.text-widget-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #409eff;
+}
+
+.text-widget-remove {
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  color: #f56c6c;
+  font-size: 14px;
+  padding: 2px;
+}
+
+.text-widget:hover .text-widget-remove {
+  opacity: 1;
+}
+
+.text-widget-remove:hover {
+  color: #f00;
+  transform: scale(1.1);
+}
+
+/* 控件内容区域 */
+.text-widget-content {
+  padding: 10px 12px;
+  min-height: 48px;
+  font-size: 13px;
+  color: #303133;
+  word-break: break-all;
+  line-height: 1.4;
+}

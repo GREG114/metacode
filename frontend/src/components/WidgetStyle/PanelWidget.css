@@ -1,0 +1,105 @@
+/* frontend/src/components/WidgetStyle/PanelWidget.css */
+
+/* 面板头部 */
+.panel-header {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f0d2f2 0%, #f0f2f5 100%);
+  border-bottom: 1px solid #8a8a8a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.panel-header:hover {
+  background: linear-gradient(135deg, #d3afd5 0%, #f0f2f5 100%);
+}
+
+.panel-header-icon {
+  color: #6b0000;
+  font-size: 14px;
+  transition: transform 0.2s;
+}
+
+.panel-header-icon.expanded {
+  transform: rotate(45deg);
+}
+
+.panel-title {
+  flex: 1;
+  font-weight: 500;
+  font-size: 16px;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-actions .el-button {
+  padding: 4px;
+}
+
+/* 面板主体 */
+.panel-body {
+  padding: 16px;
+  transition: all 0.3s ease;
+  background: #eecbcb;
+}
+
+.panel-body.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-body.row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 横向布局容器 */
+.panel-row-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-horizontal-item {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 纵向布局子项 */
+.panel-child-col {
+  margin-bottom: 0;
+}
+
+.panel-child-col.active,
+.panel-horizontal-item.active {
+  outline: 2px solid #409eff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 空状态提示 */
+.panel-empty-tip {
+  text-align: center;
+  color: #909399;
+  padding: 32px;
+  font-size: 12px;
+  border: 2px dashed #002680;
+  border-radius: 6px;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.panel-empty-tip:hover {
+  border-color: #409eff;
+  background: #f0f9ff;
+  color: #409eff;
+}
