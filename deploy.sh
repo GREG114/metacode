@@ -1,12 +1,12 @@
 #!/bin/bash
 
-cd /root/.openclaw/workspace/metacode
+# 获取脚本所在目录（相对路径）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # 杀旧进程
 pkill -f "manage.py runserver" || true
 
-# 更新代码
-git pull
 
 # 前端构建（直接输出到 dist，Nginx 会从这里读取）
 cd frontend && rm -rf dist && npm run build && cd ..
