@@ -14,9 +14,8 @@ cd frontend && rm -rf dist && npm run build && cd ..
 # 数据库迁移
 python manage.py migrate --run-syncdb
 
-# 启动 Django（处理 API 请求和动态路由）
-nohup python manage.py runserver 0.0.0.0:5002 > /tmp/metacode.log 2>&1 &
+# 启动 Django（处理所有请求，包括前端和 API）
+nohup python manage.py runserver 0.0.0.0:5001 > /tmp/metacode.log 2>&1 &
 
-echo "✅ Metacode deployed on port 5001"
-echo "   - Nginx (80) → Django API + HTML routing"
-echo "   - Static files served from frontend/dist/"
+echo "✅ Metacode deployed:"
+echo "   - Frontend + API → http://...:5001/"
